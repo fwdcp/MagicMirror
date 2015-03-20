@@ -101,7 +101,12 @@ function syncClients(method, model, options) {
 }
 
 var Client = Backbone.Model.extend({
-    sync: syncClients
+    sync: syncClients,
+    set: function() {
+        var returnValue = Backbone.Model.prototype.set.apply(this, arguments);
+        this.save();
+        return returnValue;
+    }
 });
 var Network = Backbone.Collection.extend({
     model: Client,

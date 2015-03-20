@@ -83,7 +83,12 @@ module.exports = function(nodecg) {
     }
 
     var Client = backbone.Model.extend({
-        sync: syncClients
+        sync: syncClients,
+        set: function() {
+            var returnValue = Backbone.Model.prototype.set.apply(this, arguments);
+            this.save();
+            return returnValue;
+        }
     });
 
     var Network = backbone.Collection.extend({
