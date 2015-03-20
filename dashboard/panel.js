@@ -3,7 +3,7 @@ nodecg.declareSyncedVar({
     initialValue: [],
     setter: function(clients) {
         if (network) {
-            network.fetch();
+            network.fetch({remove: false});
         }
     }
 });
@@ -105,8 +105,8 @@ rivets.formatters.following = {
     }
 }
 
-rivets.formatters.isEqual = function(self, other) {
-    return self.id == other.id;
+rivets.formatters.isEqual = function(one, other) {
+    return one == other;
 }
 
 rivets.bind($('.MagicMirror'), {network: network});
