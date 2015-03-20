@@ -90,7 +90,7 @@ network.fetch();
 
 rivets.formatters.following = {
     read: function(value) {
-        if (_.isUndefined(value) || _.isNull(value) || !network.get(following)) {
+        if (_.isUndefined(value) || _.isNull(value) || !network.get(value)) {
             return 'none';
         }
 
