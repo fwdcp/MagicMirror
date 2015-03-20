@@ -14,6 +14,6 @@ table
             td { client:name }
             td { client:id }
             td
-                select(rv-value="client:following | following")
+                select(rv-value="client.following")
                     option(value="none") ---
                     option(rv-each-follow="network.models", rv-disabled="follow:id | isEqual client:id", rv-value="follow:id") { follow:name }

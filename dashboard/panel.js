@@ -88,20 +88,36 @@ var Network = Backbone.Collection.extend({
 var network = new Network();
 network.fetch();
 
-rivets.formatters.following = {
-    read: function(value) {
-        if (_.isUndefined(value) || _.isNull(value) || !network.get(value)) {
-            return 'none';
+rivets.binders.following = {
+    bind: function(el) {
+        adapter = this.config.adapters[this.key.interface]
+        model = this.model
+        keypath = this.keypath
+
+        this.callback = function() {
+            value = $(el).val();
+
+            if (value == 'none') {
+                adapter.publish(model, keypath, null);
+            }
+            else {
+                adapter.publish(model, keypath, value);
+            }
         }
 
-        return value;
+        $(el).on('change', this.callback);
     },
-    publish: function(value) {
-        if (value == 'none') {
-            return null;
-        }
 
-        return value;
+    unbind: function(el) {
+        $(el).off('change', this.callback);
+    },
+    routine: function(el, value) {
+        if (_.isUndefined(value) || _.isNull(value) || !network.get(value)) {
+            $(el).val('none');
+        }
+        else {
+            $(el).val(value);
+        }
     }
 }
 
