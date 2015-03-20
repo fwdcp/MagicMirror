@@ -77,7 +77,10 @@ function syncClients(method, model, options) {
 }
 
 var Client = Backbone.Model.extend({
-    sync: syncClients
+    sync: syncClients,
+    initialize: function() {
+        this.bind('change', function() { this.save(); }, this);
+    }
 });
 
 var Network = Backbone.Collection.extend({
