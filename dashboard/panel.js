@@ -91,23 +91,6 @@ var Network = Backbone.Collection.extend({
 var network = new Network();
 network.fetch();
 
-rivets.formatters.following = {
-    read: function(value) {
-        if (_.isUndefined(value) || _.isNull(value) || !network.get(value)) {
-            return 'none';
-        }
-
-        return value;
-    },
-    publish: function(value) {
-        if (value == 'none') {
-            return null;
-        }
-
-        return value;
-    }
-}
-
 rivets.formatters.isEqual = function(one, other) {
     return one == other;
 }
