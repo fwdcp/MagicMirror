@@ -1,0 +1,23 @@
+{
+  "name": "MagicMirror",
+  "version": "0.1.0",
+  "authors": [
+    "thesupremecommander"
+  ],
+  "description": "a framework to mirror POVs from one TF2 client to another",
+  "private": true,
+  "homepage": "https://github.com/fwdcp/MagicMirror",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "underscore": "~1.8.2",
+    "rivets": "~0.8.0",
+    "backbone": "~1.1.2",
+    "rivets-backbone-adapter": "~2.1.2"
+  }
+}

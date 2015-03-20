@@ -1,0 +1,9 @@
+[
+    {
+        "name": "magic-mirror",
+        "title": "Magic Mirror",
+        "width": 2,
+        "file": "panel.jade",
+        "faIcon": "fa-list"
+    }
+]

@@ -1,0 +1,13 @@
+{
+    "name": "MagicMirror",
+    "version": "0.1.0",
+    "nodecgDependency": "^0.5",
+    "homepage": "https://github.com/fwdcp/MagicMirror",
+    "authors": [
+      "thesupremecommander"
+    ],
+    "description": "a framework to mirror POVs from one TF2 client to another",
+    "extension": {
+        "path": "extension.js"
+    }
+}

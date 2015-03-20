@@ -1,0 +1,19 @@
+script(src='/dashboard/MagicMirror/components/underscore/underscore-min.js')
+script(src='/dashboard/MagicMirror/components/backbone/backbone.js')
+script(src='/dashboard/MagicMirror/components/rivets/dist/rivets.bundled.min.js')
+script(src='/dashboard/MagicMirror/components/rivets-backbone-adapter/rivets-backbone.js')
+
+table
+    thead
+        tr
+            th Name
+            th Steam ID
+            th Following
+    tbody
+        tr(rv-each-client="network.models")
+            td { client:name }
+            td { client:id }
+            td
+                select(rv-value="client:following | following")
+                    option(value="none") ---
+                    option(rv-each-follow="network.models", rv-disabled="follow:id | isEqual client:id", rv-value="follow:id") { follow:name }
