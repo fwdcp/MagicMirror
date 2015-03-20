@@ -79,7 +79,15 @@ function syncClients(method, model, options) {
 var Client = Backbone.Model.extend({
     sync: syncClients,
     initialize: function() {
-        this.bind('change', function() { this.save(); }, this);
+        this.bind('change', function() {
+            this.fetch();
+            
+            if (!this.get('following')) {
+                this.unset('following');
+            }
+
+            this.save();
+        }, this);
     }
 });
 

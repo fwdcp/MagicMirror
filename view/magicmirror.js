@@ -101,7 +101,18 @@ function syncClients(method, model, options) {
 }
 
 var Client = Backbone.Model.extend({
-    sync: syncClients
+    sync: syncClients,
+    initialize: function() {
+        this.bind('change', function() {
+            this.fetch();
+
+            if (!this.get('following')) {
+                this.unset('following');
+            }
+
+            this.save();
+        }, this);
+    }
 });
 var Network = Backbone.Collection.extend({
     model: Client,
@@ -132,8 +143,6 @@ function processMessage(event) {
                 client.unset('serverType');
                 client.unset('server');
             }
-
-            client.save();
         }
     }
     else if (data.type == 'convarchanged') {
@@ -141,8 +150,6 @@ function processMessage(event) {
             if (client) {
                 client.set('lastInternalChange', Date.now());
                 client.set('state', data.newvalue);
-
-                client.save();
             }
         }
     }
