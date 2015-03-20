@@ -1,155 +1,53 @@
 var externalExtensions;
 var connectLoop;
-var client;
-var network;
+var steam;
+var lastUpdate = Date.now();
 
 nodecg.declareSyncedVar({
     name: 'clients',
-    initialValue: [],
-    setter: function(clients) {
-        network.fetch();
-
-        if (client && network) {
-            client.fetch();
-
-            var following = client.get('following');
-
-            if (following) {
-                var followedClient = network.get(following);
-
-                if (followedClient) {
-                    var state = followedClient.get('state');
-                    var ourLastUpdate = client.get('lastExternalUpdate') || 0;
-                    var theirLastUpdate = followedClient.get('lastInternalUpdate');
-
-                    if (state && ourLastUpdate < theirLastUpdate && externalExtensions && externalExtensions.readyState == 1) {
-                        externalExtensions.send(JSON.stringify({'type': 'convarchange', 'name': 'statusspec_cameratools_state', 'value': state}));
-                        client.set('lastExternalUpdate', theirLastUpdate);
-                    }
-                }
-            }
-        }
-    }
+    initialValue: []
 });
 
-function syncClients(method, model, options) {
-    if (model instanceof Backbone.Model) {
-        var clients = nodecg.variables.clients;
-
-        var index = _.findIndex(clients, function(doc) {
-            return doc[model.idAttribute] == model.id;
-        });
-
-        if (method == 'create') {
-            if (index != -1) {
-                clients.splice(index, 1);
-            }
-
-            clients.push(model.toJSON());
-            var doc = clients[clients.length - 1];
-
-            nodecg.variables.clients = clients;
-            options.success(doc);
-        }
-        else if (method == 'read') {
-            var doc = null;
-
-            if (index != -1) {
-                doc = clients[index];
-            }
-
-            options.success(doc);
-        }
-        else if (method == 'update') {
-            var doc = null;
-
-            if (index != -1) {
-                _.extend(clients[index], model.toJSON());
-                doc = clients[index];
-            }
-            else {
-                clients.push(model.toJSON());
-                doc = clients[clients.length - 1];
-            }
-
-            nodecg.variables.clients = clients;
-            options.success(doc);
-        }
-        else if (method == 'delete') {
-            var doc = null;
-
-            if (index != 1) {
-                doc = clients[index];
-
-                clients.splice(index, 1);
-            }
-
-            options.success(doc);
-        }
-        else {
-            console.log(method);
-        }
-    }
-    else if (model instanceof Backbone.Collection) {
-        if (method == 'read') {
-            options.success(nodecg.variables.clients);
-        }
-        else {
-            console.log(method);
-        }
-    }
+function findClient(steam) {
+    return _.findIndex(nodecg.variables.clients, function(client) {
+        return client.steam == steam;
+    });
 }
 
-var Client = Backbone.Model.extend({
-    sync: syncClients,
-    initialize: function() {
-        this.bind('change', function() {
-            this.fetch();
+nodecg.listenFor('stateUpdate', function(data) {
+    if (findClient(steam) != -1) {
+        var ourClient = nodecg.variables.clients[findClient(steam)];
 
-            if (!this.get('following')) {
-                this.unset('following');
-            }
-
-            this.save();
-        }, this);
+        if (ourClient && ourClient.following == data.client && lastUpdate < data.time && externalExtensions && externalExtensions.readyState == 1) {
+            externalExtensions.send(JSON.stringify({'type': 'convarchange', 'name': 'statusspec_cameratools_state', 'value': data.state}));
+            lastUpdate = data.time;
+        }
     }
 });
-var Network = Backbone.Collection.extend({
-    model: Client,
-    sync: syncClients
-});
-
-var network = new Network();
-network.fetch();
 
 function processMessage(event) {
     var data = JSON.parse(event.data);
 
     if (data.type == 'gameinfo') {
-        if (!client && data.client.steam) {
-            client = network.create({
-                id: data.client.steam
+        steam = data.client.steam;
+
+        if (steam) {
+            nodecg.sendMessage('clientUpdate', {
+                steam: data.client.steam,
+                name: data.client.name,
+                game: data.game ? data.game.address : null,
+                lastUpdate: Date.now()
             });
-        }
-
-        if (client) {
-            client.set('name', data.client.name);
-
-            if (data.game) {
-                client.set('serverType', data.game.type);
-                client.set('server', data.game.address);
-            }
-            else {
-                client.unset('serverType');
-                client.unset('server');
-            }
         }
     }
     else if (data.type == 'convarchanged') {
         if (data.name == 'statusspec_cameratools_state') {
-            if (client) {
-                client.set('lastInternalChange', Date.now());
-                client.set('state', data.newvalue);
+            if (steam) {
+                nodecg.sendMessage('stateUpdate', {
+                    client: steam,
+                    time: Date.now(),
+                    state: data.newvalue
+                });
             }
         }
     }
@@ -197,9 +95,3 @@ function connect() {
 }
 
 connectLoop = setInterval(connect, 1000);
-
-window.onunload = function() {
-    if (client) {
-        nodecg.sendMessage('leaving', client.toJSON());
-    }
-}

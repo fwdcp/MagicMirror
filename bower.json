@@ -16,8 +16,6 @@
   ],
   "dependencies": {
     "underscore": "~1.8.2",
-    "rivets": "~0.8.0",
-    "backbone": "~1.1.2",
-    "rivets-backbone-adapter": "~2.1.2"
+    "rivets": "~0.8.0"
   }
 }

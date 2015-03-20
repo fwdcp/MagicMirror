@@ -1,96 +1,65 @@
 var underscore = require('underscore');
-var backbone = require('backbone');
 
 module.exports = function(nodecg) {
     nodecg.declareSyncedVar({
         name: 'clients',
-        initialValue: [],
-        setter: function(clients) {
-            if (network) {
-                network.fetch();
-            }
-        }
+        initialValue: []
     });
 
     nodecg.variables.clients = [];
 
-    function syncClients(method, model, options) {
-        if (model instanceof backbone.Model) {
-            var clients = nodecg.variables.clients;
-
-            var index = underscore.findIndex(clients, function(doc) {
-                return doc[model.idAttribute] == model.id;
-            });
-
-            if (method == 'create') {
-                if (index != -1) {
-                    clients.splice(index, 1);
-                }
-
-                clients.push(model.toJSON());
-                var doc = clients[clients.length - 1];
-
-                nodecg.variables.clients = clients;
-                options.success(doc);
-            }
-            else if (method == 'read') {
-                var doc = null;
-
-                if (index != -1) {
-                    doc = clients[index];
-                }
-
-                options.success(doc);
-            }
-            else if (method == 'update') {
-                var doc = null;
-
-                if (index != -1) {
-                    underscore.extend(clients[index], model.toJSON());
-                    doc = clients[index];
-                }
-                else {
-                    clients.push(model.toJSON());
-                    doc = clients[clients.length - 1];
-                }
-
-                nodecg.variables.clients = clients;
-                options.success(doc);
-            }
-            else if (method == 'delete') {
-                var doc = null;
-
-                if (index != 1) {
-                    doc = clients[index];
-
-                    clients.splice(index, 1);
-                }
-
-                options.success(doc);
-            }
-            else {
-                console.log(method);
-            }
-        }
-        else if (model instanceof backbone.Collection) {
-            if (method == 'read') {
-                options.success(nodecg.variables.clients);
-            }
-            else {
-                console.log(method);
-            }
-        }
+    function findClient(steam) {
+        return underscore.findIndex(nodecg.variables.clients, function(client) {
+            return client.steam == steam;
+        });
     }
 
-    var Client = backbone.Model.extend({
-        sync: syncClients
+    nodecg.listenFor('clientUpdate', function(data) {
+        if (data.steam) {
+            var index = findClient(data.steam);
+
+            var clients = nodecg.variables.clients;
+
+            if (index != -1) {
+                underscore.extend(clients[index], data, {
+                    lastUpdate: data.lastUpdate > clients[index].lastUpdate ? data.lastUpdate : clients[index].lastUpdate
+                });
+            }
+            else {
+                clients.push(underscore.extend({
+                    following: "0"
+                }, data));
+            }
+
+            nodecg.variables.clients = clients;
+        }
     });
 
-    var Network = backbone.Collection.extend({
-        model: Client,
-        sync: syncClients
+    nodecg.listenFor('stateUpdate', function(data) {
+        if (data.client) {
+            var index = findClient(data.client);
+
+            if (index != -1) {
+                var clients = nodecg.variables.clients;
+
+                clients[index].lastUpdate = data.time > clients[index].lastUpdate ? data.time : clients[index].lastUpdate;
+
+                nodecg.variables.clients = clients;
+            }
+        }
     });
 
-    var network = new Network();
-    network.fetch();
+    nodecg.listenFor('followUpdate', function(data) {
+        if (data.client) {
+            var index = findClient(data.client);
+
+            if (index != -1) {
+                var clients = nodecg.variables.clients;
+
+                clients[index].following = data.following;
+
+                nodecg.variables.clients = clients;
+            }
+        }
+    });
 }
