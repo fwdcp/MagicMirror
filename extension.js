@@ -67,4 +67,16 @@ module.exports = function(nodecg) {
             }
         }
     });
+
+    setTimeout(function() {
+        nodecg.sendMessage('requestClientUpdate');
+
+        var clients = nodecg.variables.clients;
+
+        clients = underscore.reject(clients, function(client) {
+            return Date.now() - client.lastUpdate > 10000;
+        });
+
+        nodecg.variables.clients = clients;
+    }, 1000);
 }

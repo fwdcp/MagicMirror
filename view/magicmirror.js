@@ -25,6 +25,10 @@ nodecg.listenFor('stateUpdate', function(data) {
     }
 });
 
+nodecg.listenFor('requestClientUpdate', function() {
+    externalExtensions.send(JSON.stringify({'type': 'gameinforequest'}));
+});
+
 function processMessage(event) {
     var data = JSON.parse(event.data);
 
