@@ -1,7 +1,7 @@
 script(src='/dashboard/MagicMirror/components/underscore/underscore-min.js')
 script(src='/dashboard/MagicMirror/components/rivets/dist/rivets.bundled.min.js')
 
-table
+table.table
     thead
         tr
             th Name
@@ -16,6 +16,6 @@ table
             td { client.latency }
             td { client.game }
             td
-                select(rv-value="client.following", rv-on-change="updateFollow")
+                select.form-control.input-sm(rv-value="client.following", rv-on-change="updateFollow")
                     option(value=0) ---
                     option(rv-each-follow="data.clients", rv-disabled="follow.steam | isEqual client.steam", rv-value="follow.steam") { follow.name }
