@@ -6,11 +6,15 @@ table
         tr
             th Name
             th Steam ID
+            th Latency
+            th Server
             th Following
     tbody
         tr(rv-each-client="data.clients")
             td { client.name }
             td { client.steam }
+            td { client.latency }
+            td { client.game }
             td
                 select(rv-value="client.following", rv-on-change="updateFollow")
                     option(value=0) ---

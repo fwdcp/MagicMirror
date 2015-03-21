@@ -22,12 +22,14 @@ module.exports = function(nodecg) {
 
             if (index != -1) {
                 underscore.extend(clients[index], data, {
-                    lastUpdate: data.lastUpdate > clients[index].lastUpdate ? data.lastUpdate : clients[index].lastUpdate
+                    lastUpdate: data.lastUpdate > clients[index].lastUpdate ? data.lastUpdate : clients[index].lastUpdate,
+                    latency: Date.now() - data.lastUpdate
                 });
             }
             else {
                 clients.push(underscore.extend({
-                    following: "0"
+                    following: "0",
+                    latency: Date.now() - data.lastUpdate
                 }, data));
             }
 
@@ -42,7 +44,10 @@ module.exports = function(nodecg) {
             if (index != -1) {
                 var clients = nodecg.variables.clients;
 
-                clients[index].lastUpdate = data.time > clients[index].lastUpdate ? data.time : clients[index].lastUpdate;
+                underscore.extend(clients[index], {
+                    lastUpdate: data.time > clients[index].lastUpdate ? data.time : clients[index].lastUpdate,
+                    latency: Date.now() - data.time
+                });
 
                 nodecg.variables.clients = clients;
             }
