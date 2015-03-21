@@ -61,7 +61,9 @@ module.exports = function(nodecg) {
             if (index != -1) {
                 var clients = nodecg.variables.clients;
 
-                clients[index].following = data.following;
+                underscore.extend(clients[index], {
+                    following: data.following
+                });
 
                 nodecg.variables.clients = clients;
             }

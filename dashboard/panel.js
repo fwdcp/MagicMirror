@@ -23,6 +23,6 @@ function updateFollow(event, model) {
 
 rivets.formatters.isEqual = function(one, other) {
     return one == other;
-}
+};
 
 rivets.bind($('.MagicMirror'), {data: expose, updateFollow: updateFollow});

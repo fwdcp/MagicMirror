@@ -73,26 +73,26 @@ function connect() {
 
     externalExtensions = new WebSocket('ws://' + (url('?host') || 'localhost') + ':' + (url('?post') || 2006));
 
-    externalExtensions.onopen = function(event) {
+    externalExtensions.onopen = function() {
         if (connectLoop) {
             clearInterval(connectLoop);
             connectLoop = null;
         }
 
         externalExtensions.send(JSON.stringify({'type': 'gameinforequest'}));
-    }
+    };
 
-    externalExtensions.onclose = function(event) {
+    externalExtensions.onclose = function() {
         if (!connectLoop) {
             connectLoop = setInterval(connect, 1000);
         }
-    }
+    };
 
-    externalExtensions.onerror = function(error) {
+    externalExtensions.onerror = function() {
         if (!connectLoop) {
             connectLoop = setInterval(connect, 1000);
         }
-    }
+    };
 
     externalExtensions.onmessage = processMessage;
 }
