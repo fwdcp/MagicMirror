@@ -14,6 +14,14 @@ function findClient(steam) {
     });
 }
 
+nodecg.listenFor('ping', function(data) {
+    if (steam) {
+        data.client = steam;
+
+        nodecg.sendMessage('pong', data);
+    }
+});
+
 nodecg.listenFor('stateUpdate', function(data) {
     if (findClient(steam) != -1) {
         var ourClient = nodecg.variables.clients[findClient(steam)];

@@ -22,6 +22,24 @@ module.exports = function(nodecg) {
         });
     }
 
+    nodecg.listenFor('pong', function(data) {
+        data.end = Date.now();
+
+        if (data.client && checkClientAuthorization(data.client)) {
+            var index = findClient(data.client);
+
+            if (index != -1) {
+                var clients = nodecg.variables.clients;
+
+                underscore.extend(clients[index], {
+                    latency: Math.ceil((data.end - data.start) / 2);
+                });
+
+                nodecg.variables.clients = clients;
+            }
+        }
+    });
+
     nodecg.listenFor('clientUpdate', function(data) {
         if (data.steam && checkClientAuthorization(data.steam)) {
             var index = findClient(data.steam);
@@ -30,14 +48,12 @@ module.exports = function(nodecg) {
 
             if (index != -1) {
                 underscore.extend(clients[index], data, {
-                    lastUpdate: data.lastUpdate > clients[index].lastUpdate ? data.lastUpdate : clients[index].lastUpdate,
-                    latency: Date.now() - data.lastUpdate
+                    lastUpdate: data.lastUpdate > clients[index].lastUpdate ? data.lastUpdate : clients[index].lastUpdate
                 });
             }
             else {
                 clients.push(underscore.extend({
-                    following: "0",
-                    latency: Date.now() - data.lastUpdate
+                    following: "0"
                 }, data));
             }
 
@@ -53,8 +69,7 @@ module.exports = function(nodecg) {
                 var clients = nodecg.variables.clients;
 
                 underscore.extend(clients[index], {
-                    lastUpdate: data.time > clients[index].lastUpdate ? data.time : clients[index].lastUpdate,
-                    latency: Date.now() - data.time
+                    lastUpdate: data.time > clients[index].lastUpdate ? data.time : clients[index].lastUpdate
                 });
 
                 nodecg.variables.clients = clients;
@@ -80,6 +95,9 @@ module.exports = function(nodecg) {
 
     setTimeout(function() {
         nodecg.sendMessage('requestClientUpdate');
+        nodecg.sendMessage('ping', {
+            start: Date.now()
+        });
 
         var clients = nodecg.variables.clients;
 
