@@ -80,7 +80,6 @@ function connect() {
         }
 
         externalExtensions.send(JSON.stringify({'type': 'gameinforequest'}));
-        externalExtensions.send(JSON.stringify({'type': 'convarchange', 'name': 'statusspec_cameratools_state_enabled', 'value': 1}));
     }
 
     externalExtensions.onclose = function(event) {
