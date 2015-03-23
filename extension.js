@@ -61,22 +61,6 @@ module.exports = function(nodecg) {
         }
     });
 
-    nodecg.listenFor('stateUpdate', function(data) {
-        if (data.client && checkClientAuthorization(data.client)) {
-            var index = findClient(data.client);
-
-            if (index != -1) {
-                var clients = nodecg.variables.clients;
-
-                underscore.extend(clients[index], {
-                    lastUpdate: data.time > clients[index].lastUpdate ? data.time : clients[index].lastUpdate
-                });
-
-                nodecg.variables.clients = clients;
-            }
-        }
-    });
-
     nodecg.listenFor('followUpdate', function(data) {
         if (data.client && checkClientAuthorization(data.client)) {
             var index = findClient(data.client);
