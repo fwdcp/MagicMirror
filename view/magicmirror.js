@@ -34,7 +34,9 @@ nodecg.listenFor('stateUpdate', function(data) {
 });
 
 nodecg.listenFor('requestClientUpdate', function() {
-    externalExtensions.send(JSON.stringify({'type': 'gameinforequest'}));
+    if (externalExtensions && externalExtensions.readyState == 1) {
+        externalExtensions.send(JSON.stringify({'type': 'gameinforequest'}));
+    }
 });
 
 function processMessage(event) {
