@@ -49,7 +49,7 @@ function processMessage(event) {
             nodecg.sendMessage('clientUpdate', {
                 steam: data.client.steam,
                 name: data.client.name,
-                game: data.game ? data.game.address : null,
+                game: data.ingame ? data.context.address : null,
                 lastUpdate: Date.now()
             });
         }
@@ -88,8 +88,6 @@ function connect() {
             clearInterval(connectLoop);
             connectLoop = null;
         }
-
-        externalExtensions.send(JSON.stringify({'type': 'gameinforequest'}));
     };
 
     externalExtensions.onclose = function() {
