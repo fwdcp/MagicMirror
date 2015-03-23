@@ -2,7 +2,7 @@
     {
         "name": "magic-mirror",
         "title": "Magic Mirror",
-        "width": 3,
+        "width": 4,
         "file": "panel.jade",
         "faIcon": "fa-list"
     }
