@@ -32,7 +32,7 @@ module.exports = function(nodecg) {
                 var clients = nodecg.variables.clients;
 
                 underscore.extend(clients[index], {
-                    latency: Math.ceil((data.end - data.start) / 2);
+                    latency: Math.ceil((data.end - data.start) / 2)
                 });
 
                 nodecg.variables.clients = clients;
@@ -107,4 +107,4 @@ module.exports = function(nodecg) {
 
         nodecg.variables.clients = clients;
     }, 1000);
-}
+};
