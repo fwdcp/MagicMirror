@@ -77,7 +77,7 @@ module.exports = function(nodecg) {
         }
     });
 
-    setTimeout(function() {
+    setInterval(function() {
         nodecg.sendMessage('requestClientUpdate');
         nodecg.sendMessage('ping', {
             start: Date.now()
