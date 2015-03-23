@@ -1,6 +1,7 @@
 var externalExtensions;
 var connectLoop;
 var steam;
+var sendUpdates = false;
 var lastUpdate = Date.now();
 
 nodecg.declareSyncedVar({
@@ -14,14 +15,6 @@ function findClient(steam) {
     });
 }
 
-nodecg.listenFor('ping', function(data) {
-    if (steam) {
-        data.client = steam;
-
-        nodecg.sendMessage('pong', data);
-    }
-});
-
 nodecg.listenFor('stateUpdate', function(data) {
     if (findClient(steam) != -1) {
         var ourClient = nodecg.variables.clients[findClient(steam)];
@@ -33,7 +26,15 @@ nodecg.listenFor('stateUpdate', function(data) {
     }
 });
 
-nodecg.listenFor('requestClientUpdate', function() {
+nodecg.listenFor('tick', function(data) {
+    if (steam) {
+        data.client = steam;
+
+        nodecg.sendMessage('latencyUpdate', data);
+    }
+
+    sendUpdates = underscore.contains(data.leaders, steam);
+
     if (externalExtensions && externalExtensions.readyState == 1) {
         externalExtensions.send(JSON.stringify({'type': 'gameinforequest'}));
     }
@@ -54,7 +55,7 @@ function processMessage(event) {
             });
         }
     }
-    else if (data.type == 'convarchanged') {
+    else if (sendUpdates && data.type == 'convarchanged') {
         if (data.name == 'statusspec_cameratools_state') {
             if (steam) {
                 nodecg.sendMessage('stateUpdate', {

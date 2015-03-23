@@ -22,24 +22,6 @@ module.exports = function(nodecg) {
         });
     }
 
-    nodecg.listenFor('pong', function(data) {
-        data.end = Date.now();
-
-        if (data.client && checkClientAuthorization(data.client)) {
-            var index = findClient(data.client);
-
-            if (index != -1) {
-                var clients = nodecg.variables.clients;
-
-                underscore.extend(clients[index], {
-                    latency: Math.ceil((data.end - data.start) / 2)
-                });
-
-                nodecg.variables.clients = clients;
-            }
-        }
-    });
-
     nodecg.listenFor('clientUpdate', function(data) {
         if (data.steam && checkClientAuthorization(data.steam)) {
             var index = findClient(data.steam);
@@ -61,6 +43,24 @@ module.exports = function(nodecg) {
         }
     });
 
+    nodecg.listenFor('latencyUpdate', function(data) {
+        data.end = Date.now();
+
+        if (data.client && checkClientAuthorization(data.client)) {
+            var index = findClient(data.client);
+
+            if (index != -1) {
+                var clients = nodecg.variables.clients;
+
+                underscore.extend(clients[index], {
+                    latency: Math.ceil((data.end - data.start) / 2)
+                });
+
+                nodecg.variables.clients = clients;
+            }
+        }
+    });
+
     nodecg.listenFor('followUpdate', function(data) {
         if (data.client && checkClientAuthorization(data.client)) {
             var index = findClient(data.client);
@@ -78,11 +78,6 @@ module.exports = function(nodecg) {
     });
 
     setInterval(function() {
-        nodecg.sendMessage('requestClientUpdate');
-        nodecg.sendMessage('ping', {
-            start: Date.now()
-        });
-
         var clients = nodecg.variables.clients;
 
         clients = underscore.reject(clients, function(client) {
@@ -90,5 +85,10 @@ module.exports = function(nodecg) {
         });
 
         nodecg.variables.clients = clients;
+
+        nodecg.sendMessage('tick', {
+            start: Date.now(),
+            leaders: underscore.compact(underscore.pluck(clients, 'following'))
+        });
     }, 1000);
 };
