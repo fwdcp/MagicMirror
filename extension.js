@@ -94,7 +94,7 @@ module.exports = function(nodecg) {
     nodecg.listenFor('followUpdate', function(data) {
         if (data.client) {
             var socketID = underscore.findKey(clients, function(client) {
-                return client.steam == steam;
+                return client.steam == data.client;
             });
 
             if (socketID) {
