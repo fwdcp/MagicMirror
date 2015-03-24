@@ -6,18 +6,18 @@ module.exports = function(nodecg) {
         initialValue: []
     });
 
-    var clients = [];
+    var clients = {};
 
     function updateClients() {
-        for (var i = 0; i < clients.length; i++) {
-            if (clients[i]) {
-                if (!underscore.isUndefined(clients[i].following)) {
-                    clients[i].following = "0";
+        underscore.each(clients, function(client, socketID) {
+            if (client) {
+                if (!underscore.isUndefined(client.following)) {
+                    clients[socketID].following = "0";
                 }
 
-                clients[i].authorized = (!odecg.bundleConfig.authorizedClients && clients[i].steam) || underscore.contains(nodecg.bundleConfig.authorizedClients, clients[i].steam);
+                clients[socketID].authorized = (!nodecg.bundleConfig.authorizedClients && client.steam) || underscore.contains(nodecg.bundleConfig.authorizedClients, client.steam);
             }
-        }
+        });
 
         nodecg.variables.clients = underscore.where(clients, {authorized: true});
     }
