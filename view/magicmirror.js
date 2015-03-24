@@ -74,12 +74,24 @@ function connect() {
         if (!connectLoop) {
             connectLoop = setInterval(connect, 1000);
         }
+
+        mmSocket.emit('clientUpdate', {
+            steam: null,
+            name: null,
+            game: null
+        });
     };
 
     externalExtensions.onerror = function() {
         if (!connectLoop) {
             connectLoop = setInterval(connect, 1000);
         }
+
+        mmSocket.emit('clientUpdate', {
+            steam: null,
+            name: null,
+            game: null
+        });
     };
 
     externalExtensions.onmessage = processMessage;
