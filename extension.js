@@ -46,7 +46,7 @@ module.exports = function(nodecg) {
                 clients[socket.id] = {};
             }
 
-            var needFollowsUpdate = !clients[socket.id].steam;
+            var needFollowsUpdate = !clients[socket.id].steam && data.steam;
 
             underscore.extend(clients[socket.id], data);
 
