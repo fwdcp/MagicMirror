@@ -66,7 +66,7 @@ function connect() {
         }
     }
 
-    externalExtensions = new WebmmSocket('ws://' + (url('?host') || 'localhost') + ':' + (url('?post') || 2006));
+    externalExtensions = new WebSocket('ws://' + (url('?host') || 'localhost') + ':' + (url('?post') || 2006));
 
     externalExtensions.onopen = function() {
         if (connectLoop) {
