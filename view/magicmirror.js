@@ -1,5 +1,5 @@
 var externalExtensions;
-var socket;
+var mmSocket;
 var connectLoop;
 var sendUpdates = false;
 var lastUpdate = Date.now();
@@ -9,14 +9,14 @@ nodecg.declareSyncedVar({
     initialValue: []
 });
 
-socket.on('stateUpdate', function(data) {
+mmSocket.on('stateUpdate', function(data) {
     if (lastUpdate < data.time && externalExtensions && externalExtensions.readyState == 1) {
         externalExtensions.send(JSON.stringify({'type': 'convarchange', 'name': 'statusspec_cameratools_state', 'value': data.state}));
         lastUpdate = data.time;
     }
 });
 
-socket.on('tick', function(data) {
+mmSocket.on('tick', function(data) {
     if (steam) {
         data.client = steam;
 
@@ -32,12 +32,12 @@ function processMessage(event) {
     var data = JSON.parse(event.data);
 
     if (data.type == 'gameinfo') {
-        if (!socket && data.client.steam) {
-            socket = io('/MagicMirror');
+        if (!mmSocket && data.client.steam) {
+            mmSocket = io('/MagicMirror');
         }
 
-        if (socket) {
-            socket.emit('clientUpdate', {
+        if (mmSocket) {
+            mmSocket.emit('clientUpdate', {
                 steam: data.client.steam,
                 name: data.client.name,
                 game: data.ingame ? data.context.address : null
@@ -46,7 +46,7 @@ function processMessage(event) {
     }
     else if (sendUpdates && data.type == 'convarchanged') {
         if (data.name == 'statusspec_cameratools_state') {
-            if (socket) {
+            if (mmSocket) {
                 nodecg.sendMessage('stateUpdate', {
                     time: Date.now(),
                     state: data.newvalue
@@ -70,7 +70,7 @@ function connect() {
         }
     }
 
-    externalExtensions = new WebSocket('ws://' + (url('?host') || 'localhost') + ':' + (url('?post') || 2006));
+    externalExtensions = new WebmmSocket('ws://' + (url('?host') || 'localhost') + ':' + (url('?post') || 2006));
 
     externalExtensions.onopen = function() {
         if (connectLoop) {
