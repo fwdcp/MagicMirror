@@ -11,7 +11,7 @@ module.exports = function(nodecg) {
     function updateClients() {
         underscore.each(clients, function(client, socketID) {
             if (client) {
-                if (!underscore.isUndefined(client.following)) {
+                if (!client.following) {
                     clients[socketID].following = "0";
                 }
 
@@ -98,7 +98,7 @@ module.exports = function(nodecg) {
             });
 
             if (socketID) {
-                var oldFollowing = clients[socket.id].following;
+                var oldFollowing = clients[socketID].following;
 
                 if (io.connected[socketID]) {
                     if (oldFollowing && oldFollowing != "0") {
@@ -113,7 +113,7 @@ module.exports = function(nodecg) {
                 updateFollows(oldFollowing);
                 updateFollows(data.following);
 
-                clients[socket.id].following = data.following;
+                clients[socketID].following = data.following;
 
                 updateClients();
             }
