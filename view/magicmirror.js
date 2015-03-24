@@ -16,11 +16,7 @@ mmSocket.on('stateUpdatesRequirementUpdate', function(data) {
 });
 
 mmSocket.on('tick', function(data) {
-    if (steam) {
-        data.client = steam;
-
-        mmSocket.emit('latencyUpdate', data);
-    }
+    mmSocket.emit('latencyUpdate', data);
 
     if (externalExtensions && externalExtensions.readyState == 1) {
         externalExtensions.send(JSON.stringify({'type': 'gameinforequest'}));
