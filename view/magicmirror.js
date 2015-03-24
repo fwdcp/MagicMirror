@@ -12,7 +12,7 @@ mmSocket.on('stateUpdate', function(data) {
 });
 
 mmSocket.on('stateUpdatesRequirementUpdate', function(data) {
-    sendUpdates = data.following;
+    sendUpdates = data.required;
 });
 
 mmSocket.on('tick', function(data) {
