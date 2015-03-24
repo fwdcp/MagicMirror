@@ -1,5 +1,5 @@
 var externalExtensions;
-var mmSocket;
+var mmSocket = io('/MagicMirror');
 var connectLoop;
 var sendUpdates = false;
 var lastUpdate = Date.now();
@@ -32,10 +32,6 @@ function processMessage(event) {
     var data = JSON.parse(event.data);
 
     if (data.type == 'gameinfo') {
-        if (!mmSocket && data.client.steam) {
-            mmSocket = io('/MagicMirror');
-        }
-
         if (mmSocket) {
             mmSocket.emit('clientUpdate', {
                 steam: data.client.steam,
