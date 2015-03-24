@@ -92,7 +92,7 @@ module.exports = function(nodecg) {
     updateClients();
 
     nodecg.listenFor('followUpdate', function(data) {
-        if (data.client && checkClientAuthorization(data.client)) {
+        if (data.client) {
             var socketID = underscore.findKey(clients, function(client) {
                 return client.steam == steam;
             });
