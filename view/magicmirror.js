@@ -4,11 +4,6 @@ var connectLoop;
 var sendUpdates = false;
 var lastUpdate = Date.now();
 
-nodecg.declareSyncedVar({
-    name: 'clients',
-    initialValue: []
-});
-
 mmSocket.on('stateUpdate', function(data) {
     if (lastUpdate < data.time && externalExtensions && externalExtensions.readyState == 1) {
         externalExtensions.send(JSON.stringify({'type': 'convarchange', 'name': 'statusspec_cameratools_state', 'value': data.state}));
@@ -16,11 +11,15 @@ mmSocket.on('stateUpdate', function(data) {
     }
 });
 
+mmSocket.on('stateUpdatesRequirementUpdate', function(data) {
+    sendUpdates = data.following;
+});
+
 mmSocket.on('tick', function(data) {
     if (steam) {
         data.client = steam;
 
-        nodecg.sendMessage('latencyUpdate', data);
+        mmSocket.emit('latencyUpdate', data);
     }
 
     if (externalExtensions && externalExtensions.readyState == 1) {
@@ -43,7 +42,7 @@ function processMessage(event) {
     else if (sendUpdates && data.type == 'convarchanged') {
         if (data.name == 'statusspec_cameratools_state') {
             if (mmSocket) {
-                nodecg.sendMessage('stateUpdate', {
+                mmSocket.emit('stateUpdate', {
                     time: Date.now(),
                     state: data.newvalue
                 });
@@ -73,8 +72,6 @@ function connect() {
             clearInterval(connectLoop);
             connectLoop = null;
         }
-
-        externalExtensions.send(JSON.stringify({'type': 'gameinforequest'}));
     };
 
     externalExtensions.onclose = function() {

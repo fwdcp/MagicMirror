@@ -22,6 +22,20 @@ module.exports = function(nodecg) {
         nodecg.variables.clients = underscore.where(clients, {authorized: true});
     }
 
+    function updateFollows(steam) {
+        var socketID = underscore.findKey(clients, function(client) {
+            return client.steam == steam;
+        });
+
+        if (socketID && io.connected[socketID]) {
+            io.connected[socketID].emit('stateUpdatesRequirementUpdate', {
+                required: underscore.where(clients, {
+                    following: steam
+                }).length > 0 ? true : false
+            });
+        }
+    }
+
     var io = nodecg.getSocketIOServer().of('/MagicMirror');
 
     io.on('connection', function(socket) {
@@ -30,11 +44,19 @@ module.exports = function(nodecg) {
         socket.on('clientUpdate', function(data) {
             underscore.extend(clients[socket.id], data);
 
+            if (!clients[socket.id]) {
+                clients[socket.id] = {};
+            }
+
             updateClients();
         });
 
         socket.on('latencyUpdate', function(data) {
             data.end = Date.now();
+
+            if (!clients[socket.id]) {
+                clients[socket.id] = {};
+            }
 
             underscore.extend(clients[socket.id], {
                 latency: Math.ceil((data.end - data.start) / 2)
@@ -43,7 +65,24 @@ module.exports = function(nodecg) {
             updateClients();
         });
 
+        socket.on('stateUpdate', function(data) {
+            if (!clients[socket.id]) {
+                clients[socket.id] = {};
+            }
+
+            if (clients[socket.id].steam) {
+                io.to('steam-' + clients[socket.id].steam).emit('stateUpdate', data);
+            }
+        });
+
         socket.on('disconnect', function() {
+            if (clients[socket.id]) {
+                var oldFollowing = clients[socket.id].following;
+                clients[socket.id].following = "0";
+
+                updateFollows(oldFollowing);
+            }
+
             delete clients[socket.id];
 
             updateClients();
@@ -52,40 +91,38 @@ module.exports = function(nodecg) {
 
     updateClients();
 
-    /* function findClient(steam) {
-        return underscore.findIndex(nodecg.variables.clients, function(client) {
-            return client.steam == steam;
-        });
-    }
-
     nodecg.listenFor('followUpdate', function(data) {
         if (data.client && checkClientAuthorization(data.client)) {
-            var index = findClient(data.client);
+            var socketID = underscore.findKey(clients, function(client) {
+                return client.steam == steam;
+            });
 
-            if (index != -1) {
-                var clients = nodecg.variables.clients;
+            if (socketID) {
+                var oldFollowing = clients[socket.id].following;
 
-                underscore.extend(clients[index], {
-                    following: data.following
-                });
+                if (io.connected[socketID]) {
+                    if (oldFollowing && oldFollowing != "0") {
+                        io.connected[socketID].leave('steam-' + oldFollowing);
+                    }
 
-                nodecg.variables.clients = clients;
+                    if (data.following && data.following != "0") {
+                        io.connected[socketID].join('steam-' + data.following);
+                    }
+                }
+
+                updateFollows(oldFollowing);
+                updateFollows(data.following);
+
+                clients[socket.id].following = data.following;
+
+                updateClients();
             }
         }
     });
 
     setInterval(function() {
-        var clients = nodecg.variables.clients;
-
-        clients = underscore.reject(clients, function(client) {
-            return !checkClientAuthorization(client.steam) || Date.now() - client.lastUpdate > 10000;
+        io.emit('tick', {
+            start: Date.now()
         });
-
-        nodecg.variables.clients = clients;
-
-        nodecg.sendMessage('tick', {
-            start: Date.now(),
-            leaders: underscore.compact(underscore.pluck(clients, 'following'))
-        });
-    }, 1000); */
+    }, 1000);
 };
