@@ -6,89 +6,129 @@ module.exports = function(nodecg) {
         initialValue: []
     });
 
-    nodecg.variables.clients = [];
+    var clients = {};
 
-    function checkClientAuthorization(steam) {
-        if (!nodecg.bundleConfig.authorizedClients) {
-            return true;
-        }
+    function updateClients() {
+        underscore.each(clients, function(client, socketID) {
+            if (client) {
+                if (!client.following) {
+                    clients[socketID].following = "0";
+                }
 
-        return underscore.contains(nodecg.bundleConfig.authorizedClients, steam);
+                clients[socketID].authorized = (!nodecg.bundleConfig.authorizedClients && client.steam) || underscore.contains(nodecg.bundleConfig.authorizedClients, client.steam);
+            }
+        });
+
+        nodecg.variables.clients = underscore.where(clients, {authorized: true});
     }
 
-    function findClient(steam) {
-        return underscore.findIndex(nodecg.variables.clients, function(client) {
+    function updateFollows(steam) {
+        var socketID = underscore.findKey(clients, function(client) {
             return client.steam == steam;
         });
+
+        if (socketID && io.connected[socketID]) {
+            io.connected[socketID].emit('stateUpdatesRequirementUpdate', {
+                required: underscore.where(clients, {
+                    following: steam
+                }).length > 0 ? true : false
+            });
+        }
     }
 
-    nodecg.listenFor('clientUpdate', function(data) {
-        if (data.steam && checkClientAuthorization(data.steam)) {
-            var index = findClient(data.steam);
+    var io = nodecg.getSocketIOServer().of('/MagicMirror');
 
-            var clients = nodecg.variables.clients;
+    io.on('connection', function(socket) {
+        clients[socket.id] = {};
 
-            if (index != -1) {
-                underscore.extend(clients[index], data, {
-                    lastUpdate: data.lastUpdate > clients[index].lastUpdate ? data.lastUpdate : clients[index].lastUpdate
-                });
-            }
-            else {
-                clients.push(underscore.extend({
-                    following: "0"
-                }, data));
+        socket.on('clientUpdate', function(data) {
+            if (!clients[socket.id]) {
+                clients[socket.id] = {};
             }
 
-            nodecg.variables.clients = clients;
-        }
+            var needFollowsUpdate = !clients[socket.id].steam && data.steam;
+
+            underscore.extend(clients[socket.id], data);
+
+            if (needFollowsUpdate) {
+                updateFollows(clients[socket.id].steam);
+            }
+
+            updateClients();
+        });
+
+        socket.on('latencyUpdate', function(data) {
+            data.end = Date.now();
+
+            if (!clients[socket.id]) {
+                clients[socket.id] = {};
+            }
+
+            underscore.extend(clients[socket.id], {
+                latency: Math.ceil((data.end - data.start) / 2)
+            });
+
+            updateClients();
+        });
+
+        socket.on('stateUpdate', function(data) {
+            if (!clients[socket.id]) {
+                clients[socket.id] = {};
+            }
+
+            if (clients[socket.id].steam) {
+                io.to('steam-' + clients[socket.id].steam).emit('stateUpdate', data);
+            }
+        });
+
+        socket.on('disconnect', function() {
+            if (clients[socket.id]) {
+                var oldFollowing = clients[socket.id].following;
+                clients[socket.id].following = "0";
+
+                updateFollows(oldFollowing);
+            }
+
+            delete clients[socket.id];
+
+            updateClients();
+        });
     });
 
-    nodecg.listenFor('latencyUpdate', function(data) {
-        data.end = Date.now();
-
-        if (data.client && checkClientAuthorization(data.client)) {
-            var index = findClient(data.client);
-
-            if (index != -1) {
-                var clients = nodecg.variables.clients;
-
-                underscore.extend(clients[index], {
-                    latency: Math.ceil((data.end - data.start) / 2)
-                });
-
-                nodecg.variables.clients = clients;
-            }
-        }
-    });
+    updateClients();
 
     nodecg.listenFor('followUpdate', function(data) {
-        if (data.client && checkClientAuthorization(data.client)) {
-            var index = findClient(data.client);
+        if (data.client) {
+            var socketID = underscore.findKey(clients, function(client) {
+                return client.steam == data.client;
+            });
 
-            if (index != -1) {
-                var clients = nodecg.variables.clients;
+            if (socketID) {
+                var oldFollowing = clients[socketID].following;
 
-                underscore.extend(clients[index], {
-                    following: data.following
-                });
+                if (io.connected[socketID]) {
+                    if (oldFollowing && oldFollowing != "0") {
+                        io.connected[socketID].leave('steam-' + oldFollowing);
+                    }
 
-                nodecg.variables.clients = clients;
+                    if (data.following && data.following != "0") {
+                        io.connected[socketID].join('steam-' + data.following);
+                    }
+                }
+
+                updateFollows(oldFollowing);
+                updateFollows(data.following);
+
+                clients[socketID].following = data.following;
+
+                updateClients();
             }
         }
     });
 
     setInterval(function() {
-        var clients = nodecg.variables.clients;
-
-        clients = underscore.reject(clients, function(client) {
-            return !checkClientAuthorization(client.steam) || Date.now() - client.lastUpdate > 10000;
-        });
-
-        nodecg.variables.clients = clients;
-
-        nodecg.sendMessage('tick', {
-            start: Date.now(),
-            leaders: underscore.compact(underscore.pluck(clients, 'following'))
+        io.emit('tick', {
+            start: Date.now()
         });
     }, 1000);
 };

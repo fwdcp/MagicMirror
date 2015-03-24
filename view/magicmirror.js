@@ -1,39 +1,22 @@
 var externalExtensions;
+var mmSocket = io('/MagicMirror');
 var connectLoop;
-var steam;
 var sendUpdates = false;
 var lastUpdate = Date.now();
 
-nodecg.declareSyncedVar({
-    name: 'clients',
-    initialValue: []
-});
-
-function findClient(steam) {
-    return _.findIndex(nodecg.variables.clients, function(client) {
-        return client.steam == steam;
-    });
-}
-
-nodecg.listenFor('stateUpdate', function(data) {
-    if (findClient(steam) != -1) {
-        var ourClient = nodecg.variables.clients[findClient(steam)];
-
-        if (ourClient && ourClient.following == data.client && lastUpdate < data.time && externalExtensions && externalExtensions.readyState == 1) {
-            externalExtensions.send(JSON.stringify({'type': 'convarchange', 'name': 'statusspec_cameratools_state', 'value': data.state}));
-            lastUpdate = data.time;
-        }
+mmSocket.on('stateUpdate', function(data) {
+    if (lastUpdate < data.time && externalExtensions && externalExtensions.readyState == 1) {
+        externalExtensions.send(JSON.stringify({'type': 'convarchange', 'name': 'statusspec_cameratools_state', 'value': data.state}));
+        lastUpdate = data.time;
     }
 });
 
-nodecg.listenFor('tick', function(data) {
-    if (steam) {
-        data.client = steam;
+mmSocket.on('stateUpdatesRequirementUpdate', function(data) {
+    sendUpdates = data.required;
+});
 
-        nodecg.sendMessage('latencyUpdate', data);
-    }
-
-    sendUpdates = underscore.contains(data.leaders, steam);
+mmSocket.on('tick', function(data) {
+    mmSocket.emit('latencyUpdate', data);
 
     if (externalExtensions && externalExtensions.readyState == 1) {
         externalExtensions.send(JSON.stringify({'type': 'gameinforequest'}));
@@ -44,22 +27,18 @@ function processMessage(event) {
     var data = JSON.parse(event.data);
 
     if (data.type == 'gameinfo') {
-        steam = data.client.steam;
-
-        if (steam) {
-            nodecg.sendMessage('clientUpdate', {
+        if (mmSocket) {
+            mmSocket.emit('clientUpdate', {
                 steam: data.client.steam,
                 name: data.client.name,
-                game: data.ingame ? data.context.address : null,
-                lastUpdate: Date.now()
+                game: data.ingame ? data.context.address : null
             });
         }
     }
     else if (sendUpdates && data.type == 'convarchanged') {
         if (data.name == 'statusspec_cameratools_state') {
-            if (steam) {
-                nodecg.sendMessage('stateUpdate', {
-                    client: steam,
+            if (mmSocket) {
+                mmSocket.emit('stateUpdate', {
                     time: Date.now(),
                     state: data.newvalue
                 });
@@ -95,12 +74,24 @@ function connect() {
         if (!connectLoop) {
             connectLoop = setInterval(connect, 1000);
         }
+
+        mmSocket.emit('clientUpdate', {
+            steam: null,
+            name: null,
+            game: null
+        });
     };
 
     externalExtensions.onerror = function() {
         if (!connectLoop) {
             connectLoop = setInterval(connect, 1000);
         }
+
+        mmSocket.emit('clientUpdate', {
+            steam: null,
+            name: null,
+            game: null
+        });
     };
 
     externalExtensions.onmessage = processMessage;
