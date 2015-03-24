@@ -6,60 +6,57 @@ module.exports = function(nodecg) {
         initialValue: []
     });
 
-    nodecg.variables.clients = [];
+    var clients = [];
 
-    function checkClientAuthorization(steam) {
-        if (!nodecg.bundleConfig.authorizedClients) {
-            return true;
+    function updateClients() {
+        for (var i = 0; i < clients.length; i++) {
+            if (clients[i]) {
+                if (!underscore.isUndefined(clients[i].following)) {
+                    clients[i].following = "0";
+                }
+
+                clients[i].authorized = (!odecg.bundleConfig.authorizedClients && clients[i].steam) || underscore.contains(nodecg.bundleConfig.authorizedClients, clients[i].steam);
+            }
         }
 
-        return underscore.contains(nodecg.bundleConfig.authorizedClients, steam);
+        nodecg.variables.clients = underscore.where(clients, {authorized: true});
     }
 
-    function findClient(steam) {
+    var io = nodecg.getSocketIOServer().of('/MagicMirror');
+
+    io.on('connection', function(socket) {
+        clients[socket.id] = {};
+
+        socket.on('clientUpdate', function(data) {
+            underscore.extend(clients[socket.id], data);
+
+            updateClients();
+        });
+
+        socket.on('latencyUpdate', function(data) {
+            data.end = Date.now();
+
+            underscore.extend(clients[socket.id], {
+                latency: Math.ceil((data.end - data.start) / 2)
+            });
+
+            updateClients();
+        });
+
+        socket.on('disconnect', function() {
+            delete clients[socket.id];
+
+            updateClients();
+        });
+    });
+
+    updateClients();
+
+    /* function findClient(steam) {
         return underscore.findIndex(nodecg.variables.clients, function(client) {
             return client.steam == steam;
         });
     }
-
-    nodecg.listenFor('clientUpdate', function(data) {
-        if (data.steam && checkClientAuthorization(data.steam)) {
-            var index = findClient(data.steam);
-
-            var clients = nodecg.variables.clients;
-
-            if (index != -1) {
-                underscore.extend(clients[index], data, {
-                    lastUpdate: data.lastUpdate > clients[index].lastUpdate ? data.lastUpdate : clients[index].lastUpdate
-                });
-            }
-            else {
-                clients.push(underscore.extend({
-                    following: "0"
-                }, data));
-            }
-
-            nodecg.variables.clients = clients;
-        }
-    });
-
-    nodecg.listenFor('latencyUpdate', function(data) {
-        data.end = Date.now();
-
-        if (data.client && checkClientAuthorization(data.client)) {
-            var index = findClient(data.client);
-
-            if (index != -1) {
-                var clients = nodecg.variables.clients;
-
-                underscore.extend(clients[index], {
-                    latency: Math.ceil((data.end - data.start) / 2)
-                });
-
-                nodecg.variables.clients = clients;
-            }
-        }
-    });
 
     nodecg.listenFor('followUpdate', function(data) {
         if (data.client && checkClientAuthorization(data.client)) {
@@ -90,5 +87,5 @@ module.exports = function(nodecg) {
             start: Date.now(),
             leaders: underscore.compact(underscore.pluck(clients, 'following'))
         });
-    }, 1000);
+    }, 1000); */
 };
