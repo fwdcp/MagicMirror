@@ -1,7 +1,7 @@
 var externalExtensions;
 var mmSocket = io('/MagicMirror');
 var connectLoop;
-var sendUpdates = false;
+var transmit = false;
 var lastUpdate = Date.now();
 
 mmSocket.on('stateUpdate', function(data) {
@@ -11,8 +11,8 @@ mmSocket.on('stateUpdate', function(data) {
     }
 });
 
-mmSocket.on('stateUpdatesRequirementUpdate', function(data) {
-    sendUpdates = data.required;
+mmSocket.on('transmitUpdate', function(data) {
+    transmit = data.required;
 });
 
 mmSocket.on('tick', function(data) {
@@ -35,7 +35,7 @@ function processMessage(event) {
             });
         }
     }
-    else if (sendUpdates && data.type == 'convarchanged') {
+    else if (transmit && data.type == 'convarchanged') {
         if (data.name == 'statusspec_cameratools_state') {
             if (mmSocket) {
                 mmSocket.emit('stateUpdate', {

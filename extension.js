@@ -28,7 +28,7 @@ module.exports = function(nodecg) {
         nodecg.variables.clients = underscore.where(clients, {authorized: true});
     }
 
-    function updateFollows(steam) {
+    function updateClientTransmit(steam) {
         if (!steam || steam == "0") {
             return;
         }
@@ -36,7 +36,7 @@ module.exports = function(nodecg) {
         var socketID = getClientSocketIDFromSteam(steam);
 
         if (socketID && io.connected[socketID]) {
-            io.connected[socketID].emit('stateUpdatesRequirementUpdate', {
+            io.connected[socketID].emit('transmitUpdate', {
                 required: underscore.where(clients, {
                     following: steam
                 }).length > 0 ? true : false
@@ -59,7 +59,7 @@ module.exports = function(nodecg) {
             underscore.extend(clients[socket.id], data);
 
             if (needFollowsUpdate) {
-                updateFollows(clients[socket.id].steam);
+                updateClientTransmit(clients[socket.id].steam);
             }
 
             updateClients();
@@ -95,7 +95,7 @@ module.exports = function(nodecg) {
 
                 clients[socket.id].following = "0";
 
-                updateFollows(oldFollowing);
+                updateClientTransmit(oldFollowing);
             }
 
             delete clients[socket.id];
@@ -125,8 +125,8 @@ module.exports = function(nodecg) {
 
                 clients[socketID].following = data.following;
 
-                updateFollows(oldFollowing);
-                updateFollows(data.following);
+                updateClientTransmit(oldFollowing);
+                updateClientTransmit(data.following);
 
                 updateClients();
             }
