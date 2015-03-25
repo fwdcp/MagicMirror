@@ -1,5 +1,5 @@
 var externalExtensions;
-var magicMirror = io('/MagicMirror');
+var magicMirror = io('//' + nodecg.config.baseURL + '/MagicMirror');
 var connectLoop;
 var transmit = false;
 var lastUpdate = Date.now();
