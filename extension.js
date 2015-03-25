@@ -29,6 +29,10 @@ module.exports = function(nodecg) {
     }
 
     function updateFollows(steam) {
+        if (!steam || steam == "0") {
+            return;
+        }
+
         var socketID = getClientSocketIDFromSteam(steam);
 
         if (socketID && io.connected[socketID]) {
@@ -88,6 +92,7 @@ module.exports = function(nodecg) {
         socket.on('disconnect', function() {
             if (clients[socket.id]) {
                 var oldFollowing = clients[socket.id].following;
+
                 clients[socket.id].following = "0";
 
                 updateFollows(oldFollowing);
