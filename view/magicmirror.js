@@ -35,14 +35,12 @@ function processMessage(event) {
             });
         }
     }
-    else if (transmit && data.type == 'convarchanged') {
-        if (data.name == 'statusspec_cameratools_state') {
-            if (mmSocket) {
-                mmSocket.emit('stateUpdate', {
-                    time: Date.now(),
-                    state: data.newvalue
-                });
-            }
+    else if (data.type == 'convarchanged') {
+        if (transmit && mmSocket && data.name == 'statusspec_cameratools_state') {
+            mmSocket.emit('stateUpdate', {
+                time: Date.now(),
+                state: data.newvalue
+            });
         }
     }
 }
