@@ -4,7 +4,7 @@
   "description": "a framework to mirror POVs from one TF2 client to another",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fwdcp/MagicMirror"
+    "url": "https://github.com/fwdcp/MagicMirror.git"
   },
   "author": "Forward Command Post",
   "private": true,
