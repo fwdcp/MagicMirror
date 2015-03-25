@@ -8,6 +8,12 @@ module.exports = function(nodecg) {
 
     var clients = {};
 
+    function getClientSocketIDFromSteam(steam) {
+        return underscore.findKey(clients, function(client) {
+            return client.steam == steam;
+        })
+    }
+
     function updateClients() {
         underscore.each(clients, function(client, socketID) {
             if (client) {
@@ -23,9 +29,7 @@ module.exports = function(nodecg) {
     }
 
     function updateFollows(steam) {
-        var socketID = underscore.findKey(clients, function(client) {
-            return client.steam == steam;
-        });
+        var socketID = getClientSocketIDFromSteam(steam);
 
         if (socketID && io.connected[socketID]) {
             io.connected[socketID].emit('stateUpdatesRequirementUpdate', {
@@ -99,9 +103,7 @@ module.exports = function(nodecg) {
 
     nodecg.listenFor('followUpdate', function(data) {
         if (data.client) {
-            var socketID = underscore.findKey(clients, function(client) {
-                return client.steam == data.client;
-            });
+            var socketID = getClientSocketIDFromSteam(data.client);
 
             if (socketID) {
                 var oldFollowing = clients[socketID].following;
