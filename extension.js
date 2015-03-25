@@ -116,10 +116,10 @@ module.exports = function(nodecg) {
                     }
                 }
 
+                clients[socketID].following = data.following;
+
                 updateFollows(oldFollowing);
                 updateFollows(data.following);
-
-                clients[socketID].following = data.following;
 
                 updateClients();
             }
