@@ -1,22 +1,22 @@
 var externalExtensions;
-var mmSocket = io('/MagicMirror');
+var magicMirror = io('/MagicMirror');
 var connectLoop;
 var transmit = false;
 var lastUpdate = Date.now();
 
-mmSocket.on('stateUpdate', function(data) {
+magicMirror.on('stateUpdate', function(data) {
     if (lastUpdate < data.time && externalExtensions && externalExtensions.readyState == 1) {
         externalExtensions.send(JSON.stringify({'type': 'convarchange', 'name': 'statusspec_cameratools_state', 'value': data.state}));
         lastUpdate = data.time;
     }
 });
 
-mmSocket.on('transmitUpdate', function(data) {
+magicMirror.on('transmitUpdate', function(data) {
     transmit = data.required;
 });
 
-mmSocket.on('tick', function(data) {
-    mmSocket.emit('latencyUpdate', data);
+magicMirror.on('tick', function(data) {
+    magicMirror.emit('latencyUpdate', data);
 
     if (externalExtensions && externalExtensions.readyState == 1) {
         externalExtensions.send(JSON.stringify({'type': 'gameinforequest'}));
@@ -27,8 +27,8 @@ function processMessage(event) {
     var data = JSON.parse(event.data);
 
     if (data.type == 'gameinfo') {
-        if (mmSocket) {
-            mmSocket.emit('clientUpdate', {
+        if (magicMirror) {
+            magicMirror.emit('clientUpdate', {
                 steam: data.client.steam,
                 name: data.client.name,
                 game: data.ingame ? data.context.address : null
@@ -36,8 +36,8 @@ function processMessage(event) {
         }
     }
     else if (data.type == 'convarchanged') {
-        if (transmit && mmSocket && data.name == 'statusspec_cameratools_state') {
-            mmSocket.emit('stateUpdate', {
+        if (transmit && magicMirror && data.name == 'statusspec_cameratools_state') {
+            magicMirror.emit('stateUpdate', {
                 time: Date.now(),
                 state: data.newvalue
             });
@@ -73,7 +73,7 @@ function connect() {
             connectLoop = setInterval(connect, 1000);
         }
 
-        mmSocket.emit('clientUpdate', {
+        magicMirror.emit('clientUpdate', {
             steam: null,
             name: null,
             game: null
@@ -85,7 +85,7 @@ function connect() {
             connectLoop = setInterval(connect, 1000);
         }
 
-        mmSocket.emit('clientUpdate', {
+        magicMirror.emit('clientUpdate', {
             steam: null,
             name: null,
             game: null
