@@ -21,7 +21,7 @@ module.exports = function(nodecg) {
                     clients[socketID].following = "0";
                 }
 
-                clients[socketID].authorized = (!nodecg.bundleConfig.authorizedClients && client.steam) || underscore.contains(nodecg.bundleConfig.authorizedClients, client.steam);
+                clients[socketID].authorized = (!nodecg.bundleConfig.authorizedClients && client.steam && client.steam != "0") || underscore.contains(nodecg.bundleConfig.authorizedClients, client.steam);
             }
         });
 
